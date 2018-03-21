@@ -3,14 +3,12 @@ import coppelia.IntWA;
 import coppelia.FloatWA;
 import coppelia.remoteApi;
 import coppelia.BoolW;
-//package client_main_cubot;
+
 
 
 
 import java.io.*;
-
 import java.net.URL;
-//import sun.net.www.protocol.http.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.lang.Object;
 import java.net.URLConnection;
@@ -18,16 +16,6 @@ import java.net.HttpURLConnection;
 import org.json.JSONObject;
 import org.json.JSONArray;
 
-// Make sure to have the server side running in V-REP: 
-// in a child script of a V-REP scene, add following command
-// to be executed just once, at simulation start:
-//
-// simExtRemoteApiStart(19999)
-//
-// then start simulation, and run this program.
-//
-// IMPORTANT: for each successful call to simxStart, there
-// should be a corresponding call to simxFinish at the end!
 
 /**
  *
@@ -36,21 +24,31 @@ import org.json.JSONArray;
 
 public class Cubot {
 
-    /**
-     *
-     * @param args
-     */
+    
+    protected remoteApi vrep;
+    protected int clientID;
+    
     public static void main(String[] args) {
+        new Cubot();
+    }
+    
+    public Cubot(){
 		
+                
 		System.out.println("Program started");
 		
-		remoteApi vrep = new remoteApi();
+		vrep = new remoteApi();
 		vrep.simxFinish(-1); // just in case, close all opened connections
 		
 		int clientID = vrep.simxStart("127.0.0.1", 19999, true, true, 5000, 5);
 		if (clientID != -1) {
 			System.out.println("Connected to remote API server");
 
+                        
+                        
+                        // On nomme tout les composants
+                        
+                        
 			IntWA objectHandles = new IntWA(0);
 			int codeRetour = vrep.simxGetObjects(clientID, vrep.sim_handle_all, objectHandles, vrep.simx_opmode_blocking);
 			if (codeRetour == remoteApi.simx_return_ok)
@@ -63,6 +61,9 @@ public class Cubot {
 			IntW handle_MoteurGauche = new IntW(0);
 			IntW handle_Sensor = new IntW(0);
                         IntW handle_bubbleRob= new IntW(0);
+                        
+                        
+                        
                         
                         
 			codeRetour = vrep.simxGetObjectHandle(clientID, "bubbleRob_rightMotor", handle_MoteurDroit, remoteApi.simx_opmode_blocking);
@@ -86,77 +87,67 @@ public class Cubot {
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
 			}
- 
-                       FloatWA Angles0 = new FloatWA(3);
-                       FloatWA Angles = new FloatWA(3);
-                       int t=0;
+                        
+                        
+                        
+                        
+                       
+                       FloatWA Angles0 = new FloatWA(3); //angles voulus
+                       FloatWA Angles = new FloatWA(3); //angles instantannés
                        float minSpeed=0.87F;
                        float maxSpeed=5.23F;
-                       int backUntilTime=-1; 
+                       float backUntilTime=-1; 
                        float speed=(minSpeed+maxSpeed)*0.5F;
-                       int orientation = vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles0, remoteApi.simx_opmode_streaming);
+                       vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles0, remoteApi.simx_opmode_streaming);
                        BoolW result =new BoolW(false);
-                       int temps=0;
+                       float temps=0;
                        
-                       while (t<25){
-                            
+                       float orientationvoulue = connexionclient() ;
+                       
+                       
+                       
+                       
+                       while (getSimulationTime()<500){
                        codeRetour = vrep.simxReadProximitySensor(clientID, handle_Sensor.getValue(),result, null, null, null, remoteApi.simx_opmode_streaming);
                        
-                       if (result.getValue() == true)
-                       { backUntilTime = t+2;}
+                       if (result.getValue() == true) // si obstacle detecté
+                       { backUntilTime = getSimulationTime()+4;}
                        
-                       if (backUntilTime >t)
-                       { temps=t+4;
+                       if (backUntilTime >getSimulationTime()) // On tourne
+                       { temps=getSimulationTime()+10;
                            vrep.simxSetJointTargetVelocity(clientID, handle_MoteurGauche.getValue(), speed/8, remoteApi.simx_opmode_blocking);
                            vrep.simxSetJointTargetVelocity(clientID, handle_MoteurDroit.getValue(), -speed/8, remoteApi.simx_opmode_blocking);
                        }
                            
                       else 
                        {
-                           if (t>temps)
+                           if (getSimulationTime()>temps) // on se remet dans l'axe de angles0
                            {
-                               vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles, remoteApi.simx_opmode_streaming);
-                               if ((Angles.getArray()[2] <Angles0.getArray()[2] + 0.01 ) && (Angles.getArray()[2]> Angles0.getArray()[2] - 0.01))
-                               {   temps = t+4;}
+                              vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles, remoteApi.simx_opmode_streaming);
+                             
+
+                               if ((Angles.getArray()[2] <orientationvoulue + 0.1 ) && (Angles.getArray()[2]> orientationvoulue - 0.1))
+                               {   temps = getSimulationTime()+10;}
                             
+                               //il tourne sur lui meme
                             vrep.simxSetJointTargetVelocity(clientID, handle_MoteurDroit.getValue(), speed/8, remoteApi.simx_opmode_blocking);
                             vrep.simxSetJointTargetVelocity(clientID, handle_MoteurGauche.getValue(), -speed/8, remoteApi.simx_opmode_blocking); 
                            }
                            
                            else
                            {
+                               //il va tout droit
                              vrep.simxSetJointTargetVelocity(clientID, handle_MoteurGauche.getValue(), speed, remoteApi.simx_opmode_blocking); 
                              vrep.simxSetJointTargetVelocity(clientID, handle_MoteurDroit.getValue(), speed, remoteApi.simx_opmode_blocking);
 
-
                            }
-                           
-                           
                        }
                            
                            
                            
-                        
-		//	codeRetour = vrep.simxSetJointTargetVelocity(clientID, handle_MoteurDroit.getValue(), connexionclient(t)[0], remoteApi.simx_opmode_blocking);
-		//	codeRetour = vrep.simxSetJointTargetVelocity(clientID, handle_MoteurGauche.getValue(), connexionclient(t)[1], remoteApi.simx_opmode_blocking);
-		//	if (codeRetour == remoteApi.simx_return_ok)
-		//		System.out.println("moteur gauche Ã  1 : OK !");
-		//	else
-		//		System.out.println("moteur gauche Ã  1 : : simxSetJointTargetVelocity call returned with error code: "
-		//				+ codeRetourDescription(codeRetour));
-
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-                        t=t+1;
-                        
-                        System.out.println(t);
+                                       
                        }
 
-                      //  }
 			System.out.println("fin bLAAAAAAAAAAA");
 			// Now send some data to V-REP in a non-blocking fashion:
 			vrep.simxAddStatusbarMessage(clientID, "Hello V-REP!", remoteApi.simx_opmode_oneshot);
@@ -171,8 +162,24 @@ public class Cubot {
 		} else
 			System.out.println("Failed connecting to remote API server");
 		System.out.println("Program ended");
+                
+                
+        
 	}
+        private float getSimulationTime() {
+		
+		FloatWA outFloats= new FloatWA(1);
 
+		int result=vrep.simxCallScriptFunction(clientID,"bubbleRob",remoteApi.sim_scripttype_childscript, "getSimulationTime_function",null,null,null,null,null,outFloats,null,null,remoteApi.simx_opmode_blocking);
+		if (result==remoteApi.simx_return_ok) {
+			float returnValue = outFloats.getArray()[0];
+			return returnValue;
+		} else {
+			System.out.println("Remote function call to simGetSimulationTime failed : " + codeRetourDescription(result));
+			return -1;
+		}	
+
+	}
 	private static String codeRetourDescription(int codeRetour) {
 		switch (codeRetour) {
 		case remoteApi.simx_return_ok:
@@ -203,10 +210,11 @@ public class Cubot {
 	}
         
         
-        protected static int[] connexionclient(float t) {
+        
+        protected static int connexionclient() {
         			// Connexion au serveur simulant le robot théorique
                         try {
-                                 URL url = new URL("http://localhost:8084/REST_Terminator/webresources/Terminator/moteurs?t=" +t);
+                                 URL url = new URL("http://localhost:8084/REST_Terminator/webresources/Terminator/orientation");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
                                     connexion.setRequestProperty("User-Agent", "");
                                     connexion.connect();
@@ -218,18 +226,17 @@ public class Cubot {
                                            reponse.append(ligne + "\n");
                                      }
                                     JSONObject jObject = new JSONObject(reponse.toString());
-                                    int answer1 = jObject.getInt("droit");
-                                    int answer2 = jObject.getInt("gauche");
-                                    System.out.println("Connecté au client localhost... !");   
+                                    int answer1 = jObject.getInt("orientation");
+                                    System.out.println("Connecté au client localhost... !"); 
+                                    System.out.println("orientation = " + answer1);   
                                     connexion.disconnect();
-                                    int answer[]={answer1,answer2};
-                                    return answer;
+                                    return answer1;
                                     
                             } 
                         
                         catch (Exception ex) {
                                             ex.printStackTrace();
-                                            int answer[]={0,0};
+                                            int answer = 0;
                                             return answer;
                         }  
         }
