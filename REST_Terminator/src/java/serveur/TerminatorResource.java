@@ -38,7 +38,7 @@ public class TerminatorResource {
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public String getXml() {
-       return "dans getXml de RessourceCalculette";
+       return "dans getXml de TerminatorRessource";
     }
 
     /**
@@ -50,91 +50,16 @@ public class TerminatorResource {
     public void putXml(String content) {
     }
     
-    
-    float[] vitesses = {4,3,2};
-    
-    
-    
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/moteurs")
-    public String moteursJSON(@QueryParam("t") float t){
-        if (t<1000){
-            return formatJSON2( 1,  1);
-        }
-        if (t==2000){
-            return formatJSON2( 0,  1);
-        }
-        else{
-            return formatJSON2(1, 1);
-        }
+    @Path("/orientation")
+    public String orientationJSON(){
+
+            return formatJSON("orientation", -1);
     }
     
     
-    
-    
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/abscisse")
-    public String abscisseJSON(@QueryParam("t") float t) {
-       /* if (t<=10) {
-		return 0;
-        }
-        if ((t>10) && (t<=15)) {
-		return vitesses[1]*(t-10);
-        }
-        if ((t>15) && (t<=22)) {
-		return vitesses[1]*5;
-                     }
-*/
-        if ((t>22) && (t<=40)) {
-		return formatJSON ("abcisse",vitesses[1]*5+vitesses[0]*(t-22));
-        } /*
-        float tf1=40+(vitesses[0] * 10+vitesses[2]*7)/vitesses[2];
-	if ((t>40) && (t<=tf1)) {
-		return vitesses[1]*5+vitesses[0]*(40-22);
-        }
-        float tf2=tf1+(vitesses[1]*5+vitesses[0]*(40-22))/vitesses[1];
-	if ((t>tf1) && (t<=tf2)) {
-		return vitesses[1]*5+vitesses[0]*(40-22)-vitesses[1]*(t-tf2);
-        }*/
-        else {
-	System.out.println("erreur");
-	
-	return "bla";
-        }
-}
-    
-      @GET
-    @Produces(MediaType.TEXT_PLAIN)
-    @Path("/ordonnee")
-    public float ordoneeJSON(@QueryParam("t") float t) {
-        if (t<=10) {
-		return  vitesses[0] * t;
-        }
-        if ((t>10) && (t<=15)) {
-		return vitesses[0] * 10;
-        }
-        if ((t>15) && (t<=22)) {
-		return vitesses[0] * 10+vitesses[2]*(t-15);
-                        }
-        if ((t>22) && (t<=40)) {
-		return vitesses[0] * 10+vitesses[2]*7;
-        }
-        float tf1=40+(vitesses[0] * 10+vitesses[2]*7)/vitesses[2];
-	if ((t>40) && (t<=tf1)) {
-		return  vitesses[0] * 10+vitesses[2]*7-vitesses[2]*(t-40);
-        }
-        float tf2=tf1+(vitesses[1]*5+vitesses[0]*(40-22))/vitesses[1];
-	if ((t>tf1) && (t<=tf2)) {
-		return 0;
-        }
-        else {
-	System.out.println("erreur");
-	
-	return 10100000;
-        }
-}
     protected String formatJSON(String nom,  float resultat) {
         String json = "{";
         json += "\"" + nom + "\":" + resultat + "}";
