@@ -1,23 +1,39 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package serveur;
+
+
+
+
 import coppelia.IntW;
 import coppelia.IntWA;
 import coppelia.FloatWA;
 import coppelia.remoteApi;
 import coppelia.BoolW;
 
-
-
-
 import java.io.*;
 import java.net.URL;
-import java.net.MalformedURLException;
-import java.lang.Object;
-import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import org.json.JSONObject;
-import org.json.JSONArray;
+
+
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.Produces;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PUT;
+import javax.ws.rs.core.MediaType;
+//import javax.ws.rs.QueryParam;
+
 
 
 /**
+ * REST Web Service
  *
  * @author PC_fixe_1
  */
@@ -44,10 +60,12 @@ public class Cubot2 {
     float temps;
     
     public static void main(String[] args) {
-        new Cubot();
+        
+        
+        new Cubot2();
     }
     
-    public Cubot(){
+    public Cubot2(){
 		
                 
 		System.out.println("Program started");
@@ -221,7 +239,7 @@ public class Cubot2 {
         protected static int connexionclient() {
         			// Connexion au serveur simulant le robot théorique
                         try {
-                                 URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/orientation");
+                                 URL url = new URL("http://localhost:8084/REST_Terminator/webresources/Terminator/orientation");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
                                     connexion.setRequestProperty("User-Agent", "");
                                     connexion.connect();
@@ -249,4 +267,70 @@ public class Cubot2 {
         }
         
 }
+
+@Path("Terminator")
+class TerminatorResource {
+     
+    
+    @Context
+    private UriInfo context;
+
+    /**
+     * Creates a new instance of TerminatorResource
+     */
+  
+    
+    public TerminatorResource() {
+        
+    }
+    
+   
+    
+    //ICI c'est les methodes proposées par le serveur
+    /**
+     * Retrieves representation of an instance of serveur.Cubot2
+     * @return an instance of java.lang.String
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_XML)
+    public String getXml() {
+       return "dans getXml de TerminatorRessource";
+    }
+
+    /**
+     * PUT method for updating or creating an instance of Cubot2
+     * @param content representation for the resource
+     */
+    @PUT
+    @Consumes(MediaType.APPLICATION_XML)
+    public void putXml(String content) {
+    }
+    
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/orientation")
+    public String orientationJSON(){
+
+            return formatJSON("orientation", -1);
+    }
+    
+    
+    protected String formatJSON(String nom,  float resultat) {
+        String json = "{";
+        json += "\"" + nom + "\":" + resultat + "}";
+ 
+        return json;
+    }
+     protected String formatJSON2(int moteurdroit,   int moteurgauche) {
+        String json = "{\n";
+        json += "\t\t\"droit\": \"" + moteurdroit + "\",\n";
+        json += "\t\t\"gauche\": \"" + moteurgauche + "\",\n";
+        json += "}";
+        return json;
+    }
+    
+
+}
+
 
