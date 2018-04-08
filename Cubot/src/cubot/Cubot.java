@@ -108,7 +108,7 @@ public class Cubot {
         protected static int connexionclient() {
         			// Connexion au serveur simulant le robot théorique
                         try {
-                                 URL url = new URL("http://localhost:8084/REST_Terminator/webresources/Terminator/orientation");
+                                 URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/orientation");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
                                     connexion.setRequestProperty("User-Agent", "");
                                     connexion.connect();
