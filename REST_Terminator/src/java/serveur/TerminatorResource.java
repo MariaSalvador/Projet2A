@@ -29,6 +29,7 @@ public class TerminatorResource {
      * Creates a new instance of TerminatorResource
      */
     public TerminatorResource() {
+        system.out.println("je suis la")
     }
 
     /**
