@@ -212,8 +212,11 @@ public class TerminatorResource {
                                             return formatJSON("pas connécté au client, orientation", -1);
                         }  
         }*/
+
     
+ 
     
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/orientationJSON")
