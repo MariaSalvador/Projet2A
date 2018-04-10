@@ -38,7 +38,7 @@ import javax.ws.rs.core.MediaType;
  * @author PC_fixe_1
  */
 
-public class Cubot2 {
+public class TerminatorResource {
 
     
     protected remoteApi vrep;
@@ -62,10 +62,10 @@ public class Cubot2 {
     public static void main(String[] args) {
         
         
-        new Cubot2();
+        new TerminatorResource();
     }
     
-    public Cubot2(){
+    public TerminatorResource(){
 		
                 
 		System.out.println("Program started");
@@ -282,7 +282,7 @@ class TerminatorResource {
     
     public TerminatorResource() {
 
-        system.out.println("je suis la")
+        System.out.println("je suis la");
 
     }
     

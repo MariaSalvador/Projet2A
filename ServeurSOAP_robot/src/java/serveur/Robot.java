@@ -46,19 +46,17 @@ public class Robot {
     @WebMethod(operationName = "initsimul")
     public String initsimul(){
      
-        	connexionVREP();		// Connexion a VREP
-    return "CSa marche";
+     coppelia.remoteApi vrep ;
+    vrep= new  coppelia.remoteApi();
+    vrep.simxFinish(-1);
+    int clientID = vrep.simxStart("127.0.0.1", 19999, true, true, 5000, 5);		// Connexion a VREP
+    return "Ca marche";
    
 	}
     
     public static void connexionVREP(){
         
-    coppelia.remoteApi vrep ;
-    vrep= new  coppelia.remoteApi();
-
-    
-    //vrep.simxFinish(-1);
-    //int clientID = vrep.simxStart("127.0.0.1", 19999, true, true, 5000, 5);
+   
     }
 
     
