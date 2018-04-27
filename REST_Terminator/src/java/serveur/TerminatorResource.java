@@ -13,12 +13,14 @@ import java.net.URL;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PUT;
 import javax.ws.rs.core.MediaType;
-import org.json.JSONObject;
+//import org.json.JSONObject;
 /**
  * REST Web Service
  *
@@ -36,16 +38,12 @@ public class TerminatorResource {
     IntW handle_MoteurGauche = new IntW(0);
     IntW handle_Sensor = new IntW(0);
     IntW handle_bubbleRob= new IntW(0);
-    FloatWA Angles0 = new FloatWA(3); //angles voulus
-    FloatWA Angles = new FloatWA(3); //angles instantannés
-    float minSpeed=0.87F;
-    float maxSpeed=5.23F;
-    float backUntilTime=-1; 
-    float speed=(minSpeed+maxSpeed)*0.5F;
+  //  FloatWA Angles0 = new FloatWA(3); //angles voulus
+    FloatWA Angles = new FloatWA(3); 
+    
     BoolW result =new BoolW(false);
     int codeRetour;
-    float temps;
-
+    
     remoteApi vrep = new remoteApi();
 
     @Context
@@ -77,10 +75,29 @@ public class TerminatorResource {
     }
     
 
+ 
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/connexionVREP")
+    public int connexionVREP() {
+        			// Connexion a VREP
+                            
+                             vrep.simxFinish(-1);
+                           
+                            int clientID = vrep.simxStart("127.0.0.1", 19999, true, true, 5000, 5);
+                            if (clientID != -1) {
+                              vrep.simxAddStatusbarMessage(clientID,"HELLOOO VREP",remoteApi. simx_opmode_oneshot);    
+                            }
+                            
+                            return clientID;
+	}
+    
+    
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/getSimulationTime")
-    private String getSimulationTime(){
+    public String getSimulationTime(){
         
         FloatWA outFloats= new FloatWA(1);
 
@@ -98,23 +115,44 @@ public class TerminatorResource {
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/connexionVREP")
-    public String connexionVREP() {
-        			// Connexion a VREP
-                            //vrep = new remoteApi();
-                           /* vrep.simxFinish(-1);
-                            int answer = 0;
-                            int clientID = vrep.simxStart("127.0.0.1", 19999, true, true, 5000, 5);
-                            if (clientID != -1) {
-                                System.out.println("Connected to remote API server");
-                            
-                                answer = 1;
-                                
-                            }*/
-                            return(formatJSON("ConnexionVrep",connexionVrep()));
-	}
+    @Path("/getOrientation")
+    public String getOrientation(){
+    vrep.simxGetObjectHandle(clientID, "bubbleRob", handle_bubbleRob, remoteApi.simx_opmode_blocking);   
+    vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles, remoteApi.simx_opmode_streaming);
+    double orientation =  Angles.getArray()[2];
+    return formatJSON4("orientation", orientation);
+    }
+ 
     
     @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/ProximitySensor")
+    public String proximitysensor(){
+        codeRetour = vrep.simxGetObjectHandle(clientID, "bubbleRob_sensingNose", handle_Sensor, remoteApi.simx_opmode_blocking);
+    vrep.simxReadProximitySensor(clientID, handle_Sensor.getValue(),result, null, null, null, remoteApi.simx_opmode_streaming);
+    return formatJSON3("objetdetecte", result.getValue());
+    }
+    
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/setMotor")
+    public int  setspeedmotor(@QueryParam("moteur") String moteur, @QueryParam("valeur") float valeur){
+        if ("gauche".equals(moteur)){
+        vrep.simxGetObjectHandle(clientID, "bubbleRob_leftMotor", handle_MoteurGauche, remoteApi.simx_opmode_blocking);
+        vrep.simxSetJointTargetVelocity(clientID, handle_MoteurGauche.getValue(), valeur, remoteApi.simx_opmode_oneshot);
+                }
+        else {
+        vrep.simxGetObjectHandle(clientID, "bubbleRob_rightMotor", handle_MoteurDroit, remoteApi.simx_opmode_blocking);
+        vrep.simxSetJointTargetVelocity(clientID, handle_MoteurDroit.getValue(), valeur, remoteApi.simx_opmode_blocking);}
+        return 1;
+    }
+    
+
+
+    
+
+
+  /*  @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/initVariables")
     private void initVariables() {
@@ -148,7 +186,7 @@ public class TerminatorResource {
 			}
                         vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles0, remoteApi.simx_opmode_streaming);
                             
-	}
+	}*/
     
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -216,19 +254,10 @@ public class TerminatorResource {
                         }  
         }*/
 
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/orientationJSON")
-    public String orientationJSON(){
-
-            return formatJSON("orientation", -1);
-    }
-    
     
     protected String formatJSON(String nom,  float resultat) {
         String json = "{";
         json += "\"" + nom + "\":" + resultat + "}";
- 
         return json;
     }
      protected String formatJSON2(int moteurdroit,   int moteurgauche) {
@@ -237,9 +266,22 @@ public class TerminatorResource {
         json += "\t\t\"gauche\": \"" + moteurgauche + "\",\n";
         json += "}";
         return json;
+       
     }
      
-     public int connexionVrep() {
+     protected String formatJSON3(String nom,  Boolean resultat) {
+        String json = "{";
+        json += "\"" + nom + "\":" + resultat + "}";
+ 
+        return json;
+    }
+     
+     protected String formatJSON4(String nom,  Double resultat) {
+        String json = "{";
+        json += "\"" + nom + "\":" + resultat + "}";
+        return json;
+    }
+    /* public int connexionVrep() {
         			// Connexion a VREP
                             vrep = new remoteApi();
                             vrep.simxFinish(-1);
@@ -254,5 +296,5 @@ public class TerminatorResource {
                             return(answer);
 
     
+}*/
 }
-     }
