@@ -34,14 +34,16 @@ public class TerminatorResource {
     protected int clientID;
     int answer;
     IntWA objectHandles = new IntWA(0);
+    IntW handle_destination = new IntW(0);
     IntW handle_MoteurDroit = new IntW(0);
     IntW handle_MoteurGauche = new IntW(0);
     IntW handle_Sensor = new IntW(0);
     IntW handle_bubbleRob= new IntW(0);
   //  FloatWA Angles0 = new FloatWA(3); //angles voulus
     FloatWA Angles = new FloatWA(3); 
-    
-    BoolW result =new BoolW(false);
+    FloatWA positionBubbleRob = new FloatWA(3); 
+      FloatWA pointB = new FloatWA(3); 
+
     int codeRetour;
     
     remoteApi vrep = new remoteApi();
@@ -120,6 +122,7 @@ public class TerminatorResource {
     vrep.simxGetObjectHandle(clientID, "bubbleRob", handle_bubbleRob, remoteApi.simx_opmode_blocking);   
     vrep.simxGetObjectOrientation(clientID,handle_bubbleRob.getValue(),-1,Angles, remoteApi.simx_opmode_streaming);
     double orientation =  Angles.getArray()[2];
+    System.out.println(Angles.getArray());
     return formatJSON4("orientation", orientation);
     }
  
@@ -128,7 +131,8 @@ public class TerminatorResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/ProximitySensor")
     public String proximitysensor(){
-        codeRetour = vrep.simxGetObjectHandle(clientID, "bubbleRob_sensingNose", handle_Sensor, remoteApi.simx_opmode_blocking);
+    BoolW result =new BoolW(false);
+    vrep.simxGetObjectHandle(clientID, "bubbleRob_sensingNose", handle_Sensor, remoteApi.simx_opmode_blocking);
     vrep.simxReadProximitySensor(clientID, handle_Sensor.getValue(),result, null, null, null, remoteApi.simx_opmode_streaming);
     return formatJSON3("objetdetecte", result.getValue());
     }
@@ -147,9 +151,30 @@ public class TerminatorResource {
         return 1;
     }
     
-
-
+        @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getPositionDestination")
+    public String Trajectoire(){
+  
+    vrep.simxGetObjectHandle(clientID, "POINT_B", handle_destination, remoteApi.simx_opmode_blocking);
+    vrep.simxGetObjectPosition(clientID, handle_destination.getValue(),-1, pointB, remoteApi.simx_opmode_streaming);
+   double x =  pointB.getArray()[0];
+    double y = pointB.getArray()[1];
+    return formatJSON2(x, y);
+    }
     
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getPositionBubbleRob")
+    public String PositionBubbleRob(){
+
+    vrep.simxGetObjectHandle(clientID, "bubbleRob", handle_bubbleRob, remoteApi.simx_opmode_blocking);
+    vrep.simxGetObjectPosition(clientID, handle_bubbleRob.getValue(),-1, positionBubbleRob, remoteApi.simx_opmode_streaming);
+    double x =  positionBubbleRob.getArray()[0];
+    double y = positionBubbleRob.getArray()[1];
+    return formatJSON2(x, y);
+    }
+
 
 
   /*  @GET
@@ -219,40 +244,7 @@ public class TerminatorResource {
 		}
 
 	}
-    /*
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/connexionclient")
-    protected String connexionclient() {
-        			// Connexion au serveur simulant le robot théorique
-                        try {
-                                 URL url = new URL("http://localhost:8084/REST_Terminator/webresources/Terminator/orientationJSON");
-                                    HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
-                                    connexion.setRequestProperty("User-Agent", "");
-                                    connexion.connect();
-                                    InputStream streamReponse = connexion.getInputStream();
-                                    BufferedReader bufferReception = new BufferedReader(new InputStreamReader(streamReponse));
-                                    String ligne = "";
-                                    StringBuilder reponse = new StringBuilder();
-                                    while ((ligne = bufferReception.readLine()) != null) {
-                                           reponse.append(ligne + "\n");
-                                     }
-                                    JSONObject jObject = new JSONObject(reponse.toString());
-                                    int answer1 = jObject.getInt("orientation");
-                                    System.out.println("Connecté au client localhost... !"); 
-                                    System.out.println("orientation = " + answer1);   
-                                    connexion.disconnect();
-                                    
-                                    return formatJSON("connécté au client, orientation : ", answer1);
-                                    
-                            } 
-                        
-                        catch (Exception ex) {
-                                            ex.printStackTrace();
-                                            int answer = 0;
-                                            return formatJSON("pas connécté au client, orientation", -1);
-                        }  
-        }*/
+
 
     
     protected String formatJSON(String nom,  float resultat) {
@@ -260,10 +252,10 @@ public class TerminatorResource {
         json += "\"" + nom + "\":" + resultat + "}";
         return json;
     }
-     protected String formatJSON2(int moteurdroit,   int moteurgauche) {
+     protected String formatJSON2(double x,   double y) {
         String json = "{\n";
-        json += "\t\t\"droit\": \"" + moteurdroit + "\",\n";
-        json += "\t\t\"gauche\": \"" + moteurgauche + "\",\n";
+        json += "\t\t\"x\": \"" + x + "\",\n";
+        json += "\t\t\"y\": \"" + y+ "\",\n";
         json += "}";
         return json;
        
@@ -276,7 +268,7 @@ public class TerminatorResource {
         return json;
     }
      
-     protected String formatJSON4(String nom,  Double resultat) {
+     protected String formatJSON4(String nom,  double resultat) {
         String json = "{";
         json += "\"" + nom + "\":" + resultat + "}";
         return json;

@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package cubot;
+package cubot2;
 
 import java.io.*;
 import java.net.URL;
@@ -18,7 +18,7 @@ import org.json.JSONArray;
  *
  * @author User
  */
-public class Cubot {
+public class Cubot2 {
 
     /**
      * @param args the command line arguments
@@ -26,40 +26,48 @@ public class Cubot {
     public static void main(String[] args) {
         
         // TODO code application logic here
-         new Cubot();
+         new Cubot2();
     }
     
-    public Cubot(){
+    public Cubot2(){
         
         float minSpeed=0.87F;
         float maxSpeed=5.23F;
         float backUntilTime=-1; 
         float speed=(minSpeed+maxSpeed)*0.5F;
         float temps = 0;
-        int orientationvoulue = -1;
+        
 		
                 
             System.out.println("Program started");
             System.out.println("Connecté a vrep" + connexionclient());
-            System.out.println(getOrientation());
-                
-                
+            double[] posB = getPositionDestination(); // il faut executer une fois avant si on ne veut pas que ca renvoie erreur
+          //  double orientationvoulue = Math.toDegrees(-getOrientation()-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
+           // System.out.println(orientationvoulue);
+            //System.out.println(getPositionBubbleRob()[1]);
             while (getTime()<500){
+
                        if (ProximitySensor() == "true") // si obstacle detecté
                        
                        { backUntilTime = getTime()+4;}
                        
                        if (backUntilTime >getTime()) // On tourne
                        { temps=getTime()+10;
+                       
                            setVitesseMoteur("gauche",speed/8);
                            setVitesseMoteur("droit",-speed/8);
                        }
                            
                       else 
                        {
-                           if (getTime()>temps) // on se remet dans l'axe de angles0
-                           {        
-                               if ((getOrientation() <orientationvoulue + 0.1 ) && (getOrientation()> orientationvoulue - 0.1))
+                           if (getTime()>temps) // on se remet dans l'orientation de la droite passant entre le point A et B
+                           {   
+                              setVitesseMoteur("gauche",0);
+                           setVitesseMoteur("droit",0); 
+                           double orien = getOrientation();
+                              double orientationvoulue = Math.toDegrees(-orien-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
+                              
+                               if ((Math.toDegrees(orien) <orientationvoulue + 3 ) && (Math.toDegrees(orien)> orientationvoulue - 3))
                                {   temps = getTime()+10;}
                             
                                //il tourne sur lui meme
@@ -200,5 +208,65 @@ protected static int setVitesseMoteur(String moteur, float vitesse){
     catch (Exception ex) {
         ex.printStackTrace();
         return 0;}  
+}
+protected static double[] getPositionBubbleRob(){
+     try {
+            URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getPositionBubbleRob");
+            HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
+            connexion.setRequestProperty("User-Agent", "");
+             connexion.connect();
+              InputStream streamReponse = connexion.getInputStream();
+              BufferedReader bufferReception = new BufferedReader(new InputStreamReader(streamReponse));
+              String ligne = "";
+              StringBuilder reponse = new StringBuilder();
+              while ((ligne = bufferReception.readLine()) != null) {
+                      reponse.append(ligne + "\n");
+                }
+               JSONObject jObject = new JSONObject(reponse.toString());
+               double answer1 = jObject.getDouble("x");
+               double answer2 = jObject.getDouble("y");
+               connexion.disconnect();
+               double answer[]={answer1,answer2};
+               return answer;
+
+     }
+      catch (Exception ex) {
+                  ex.printStackTrace();
+                  double[] answer = {110,110};
+                   return answer;
+                        }  
+}
+
+protected static double[] getPositionDestination(){
+     try {
+            URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getPositionDestination");
+            HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
+            connexion.setRequestProperty("User-Agent", "");
+             connexion.connect();
+              InputStream streamReponse = connexion.getInputStream();
+              BufferedReader bufferReception = new BufferedReader(new InputStreamReader(streamReponse));
+              String ligne = "";
+              StringBuilder reponse = new StringBuilder();
+              while ((ligne = bufferReception.readLine()) != null) {
+                      reponse.append(ligne + "\n");
+                }
+               JSONObject jObject = new JSONObject(reponse.toString());
+               double answer1 = jObject.getDouble("x");
+               double answer2 = jObject.getDouble("y");
+               connexion.disconnect();
+               double answer[]={answer1,answer2};
+               return answer;
+
+     }
+      catch (Exception ex) {
+                  ex.printStackTrace();
+                  double[] answer = {110,110};
+                   return answer;
+                        }  
+}
+protected static double getTrajectoire(double[] pointA, double[] pointB) {
+   
+  double angle = Math.atan(Math.abs(pointB[1] - pointA[1])/Math.abs(pointB[0] - pointA[0]));
+  return angle;
 }
 }
