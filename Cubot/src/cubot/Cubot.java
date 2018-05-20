@@ -19,13 +19,12 @@ import org.json.JSONArray;
  * @author User
  */
 public class Cubot2 {
-
-    /**
-     * @param args the command line arguments
-     */
+     
+     
+    
+            
     public static void main(String[] args) {
         
-        // TODO code application logic here
          new Cubot2();
     }
     
@@ -33,19 +32,18 @@ public class Cubot2 {
         
         float minSpeed=0.87F;
         float maxSpeed=5.23F;
-        float backUntilTime=-1; 
-        float speed=(minSpeed+maxSpeed)*0.5F;
-        float temps = 0;
+        float speed=(minSpeed+maxSpeed)*0.5F; ///vitesses des moteurs des roues
+       
+        float temps = 0;  ///variable pour vérifier à intervalles réguliers l'orientation du robot
         
-		
-                
-            System.out.println("Program started");
-            System.out.println("Connecté a vrep" + connexionclient());
-            double[] posB = getPositionDestination(); // il faut executer une fois avant si on ne veut pas que ca renvoie erreur
-          //  double orientationvoulue = Math.toDegrees(-getOrientation()-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
-           // System.out.println(orientationvoulue);
-            //System.out.println(getPositionBubbleRob()[1]);
-            while (getTime()<500){
+         float backUntilTime=-1;  
+        
+
+            connexionclient(); 
+            
+            double[] posB = getPositionDestination(); //coordonnées x,y,z du point objectif
+
+            while (getTime()<500){ //simulation de temps 500
 
                        if (ProximitySensor() == "true") // si obstacle detecté
                        
@@ -62,24 +60,50 @@ public class Cubot2 {
                        {
                            if (getTime()>temps) // on se remet dans l'orientation de la droite passant entre le point A et B
                            {   
-                              setVitesseMoteur("gauche",0);
+                           setVitesseMoteur("gauche",0);
                            setVitesseMoteur("droit",0); 
                            double orien = getOrientation();
-                              double orientationvoulue = Math.toDegrees(-orien-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
-                              
-                               if ((Math.toDegrees(orien) <orientationvoulue + 3 ) && (Math.toDegrees(orien)> orientationvoulue - 3))
-                               {   temps = getTime()+10;}
+                         double orientationvoulue = Math.toDegrees(-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
+                           orien=Math.toDegrees(orien);   
+                               if ((orien <orientationvoulue + 2 ) && (orien> orientationvoulue - 2))
+                               {   System.out.println(orientationvoulue);
+                                   System.out.println(orien);
+                                   temps = getTime()+10;}
                             
                                //il tourne sur lui meme
+                               
+                               if (Math.abs(orientationvoulue - orien)<Math.abs(360 -orientationvoulue+orien)){
+
+                                    if (orientationvoulue-orien>0){
+                                    //il tourne vers la gauche
+                                    setVitesseMoteur("gauche",-speed/8);
+                                    setVitesseMoteur("droit",speed/8);}
+                                    else {
+                                    //il tourne vers la droite
+                                    setVitesseMoteur("gauche",speed/8);
+                                    setVitesseMoteur("droit",-speed/8);
+                                    }
+                               }
+                               else{
+                               if (360 -orientationvoulue+orien>0){
+                                // il tourne vers la gauche
                                 setVitesseMoteur("gauche",-speed/8);
-                                setVitesseMoteur("droit",speed/8); 
+                                setVitesseMoteur("droit",speed/8);
+                               
+                               }
+                               else{
+                                 //il tourne vers la droite
+                                 setVitesseMoteur("gauche",speed/8);
+                                 setVitesseMoteur("droit",-speed/8);}
+                                
+                               }  
                           
                            }
                            
                            else
                            {
                                //il va tout droit
-                             setVitesseMoteur("gauche",speed);
+                           setVitesseMoteur("gauche",speed);
                            setVitesseMoteur("droit",speed); 
                                             }
                        
@@ -90,15 +114,16 @@ public class Cubot2 {
     }
     }
  protected static int connexionclient() {
-        			// Connexion au serveur simulant le robot théorique
+        			// Connexion au serveur qui permet de se connecter avec V-REP
                         try {
+                              
                                  URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/connexionVREP");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
                                     connexion.setRequestProperty("User-Agent", "");
                                     connexion.connect();
                                     InputStream streamReponse = connexion.getInputStream();
                                     BufferedReader bufferReception = new BufferedReader(new InputStreamReader(streamReponse));
-                                    
+                                    System.out.println("Program started");
                                     return 1;
                                     
                             }
