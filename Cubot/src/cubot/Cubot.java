@@ -34,7 +34,7 @@ public class Cubot {
         float maxSpeed=5.23F;
         float speed=(minSpeed+maxSpeed)*0.5F; ///vitesses des moteurs des roues
        
-        float temps = 0;  ///variable pour vérifier à intervalles réguliers l'orientation du robot
+        float backToAxisTime = 0;  ///variable pour vérifier à intervalles réguliers l'orientation du robot
         double[] posBubble ;
          float backUntilTime=-1;  
         
@@ -51,7 +51,7 @@ public class Cubot {
                        }
                        
                        if (backUntilTime >getTime()) // On tourne
-                       { temps=getTime()+10;
+                       { backToAxisTime=getTime()+10;
                        
                            setVitesseMoteur("gauche",speed/8);
                            setVitesseMoteur("droit",-speed/8);
@@ -59,7 +59,7 @@ public class Cubot {
                            
                       else 
                        {
-                           if (getTime()>temps) // on se remet dans l'orientation de la droite passant entre le point A et B
+                           if (getTime()>backToAxisTime) // on se remet dans l'orientation de la droite passant entre le point A et B
                            {   
                            setVitesseMoteur("gauche",0);
                            setVitesseMoteur("droit",0);  // On arrete les 2 moteurs pour calculer l'angle, sinon le calcul est faux
@@ -67,7 +67,7 @@ public class Cubot {
                            double orientationvoulue = Math.toDegrees(-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
                            orien=Math.toDegrees(orien);   // transformation en degrées
                            if ((orien <orientationvoulue + 2 ) && (orien> orientationvoulue - 2)) // Si on est dans le bon axe, avec une erreur de 2 degrés
-                               {   temps = getTime()+10;}
+                               {   backToAxisTime = getTime()+10;}
                             
                                //il tourne sur lui meme
                                
