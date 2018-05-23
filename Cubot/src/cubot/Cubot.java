@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package cubot2;
+package cubot;
 
 import java.io.*;
 import java.net.URL;
@@ -18,24 +18,24 @@ import org.json.JSONArray;
  *
  * @author User
  */
-public class Cubot2 {
+public class Cubot {
      
      
     
             
     public static void main(String[] args) {
         
-         new Cubot2();
+         new Cubot();
     }
     
-    public Cubot2(){
+    public Cubot(){
         
         float minSpeed=0.87F;
         float maxSpeed=5.23F;
         float speed=(minSpeed+maxSpeed)*0.5F; ///vitesses des moteurs des roues
        
         float temps = 0;  ///variable pour vérifier à intervalles réguliers l'orientation du robot
-        
+        double[] posBubble ;
          float backUntilTime=-1;  
         
 
@@ -45,9 +45,10 @@ public class Cubot2 {
 
             while (getTime()<500){ //simulation de temps 500
 
-                       if (ProximitySensor() == "true") // si obstacle detecté
-                       
-                       { backUntilTime = getTime()+4;}
+                       if (ProximitySensor() == "true") // si obstacle detecté     
+                       { 
+                           backUntilTime = getTime()+4;    // On va rajoute 
+                       }
                        
                        if (backUntilTime >getTime()) // On tourne
                        { temps=getTime()+10;
@@ -61,16 +62,16 @@ public class Cubot2 {
                            if (getTime()>temps) // on se remet dans l'orientation de la droite passant entre le point A et B
                            {   
                            setVitesseMoteur("gauche",0);
-                           setVitesseMoteur("droit",0); 
+                           setVitesseMoteur("droit",0);  // On arrete les 2 moteurs pour calculer l'angle, sinon le calcul est faux
                            double orien = getOrientation();
-                         double orientationvoulue = Math.toDegrees(-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
-                           orien=Math.toDegrees(orien);   
-                               if ((orien <orientationvoulue + 2 ) && (orien> orientationvoulue - 2))
-                               {   System.out.println(orientationvoulue);
-                                   System.out.println(orien);
-                                   temps = getTime()+10;}
+                           double orientationvoulue = Math.toDegrees(-getTrajectoire( getPositionBubbleRob(), getPositionDestination()));
+                           orien=Math.toDegrees(orien);   // transformation en degrées
+                           if ((orien <orientationvoulue + 2 ) && (orien> orientationvoulue - 2)) // Si on est dans le bon axe, avec une erreur de 2 degrés
+                               {   temps = getTime()+10;}
                             
                                //il tourne sur lui meme
+                               
+                               //Plusieurs cas possibles pour que le Robot tourne de façon a perdre le moins de temps possible
                                
                                if (Math.abs(orientationvoulue - orien)<Math.abs(360 -orientationvoulue+orien)){
 
@@ -115,6 +116,8 @@ public class Cubot2 {
     }
  protected static int connexionclient() {
         			// Connexion au serveur qui permet de se connecter avec V-REP
+                                //return 1 si bonne connexion, 0 sinon
+                                //faire attention aux ports: ici 8080
                         try {
                               
                                  URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/connexionVREP");
@@ -123,11 +126,8 @@ public class Cubot2 {
                                     connexion.connect();
                                     InputStream streamReponse = connexion.getInputStream();
                                     BufferedReader bufferReception = new BufferedReader(new InputStreamReader(streamReponse));
-                                    System.out.println("Program started");
-                                    return 1;
-                                    
+                                    return 1;          
                             }
-                        
                         catch (Exception ex) {
                                             ex.printStackTrace();
                                             int answer = 0;
@@ -136,7 +136,9 @@ public class Cubot2 {
         }
  
   protected static int getTime() {
-        			
+        // renvoie le temps de simulation dans V-REP
+        // 0 si erreur
+        //Faire attention aux ports : ici 8080
                         try {
                                  URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getSimulationTime");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
@@ -164,7 +166,10 @@ public class Cubot2 {
         }
         
   protected static double getOrientation() {
-        			
+      
+     //renvoie l'angle gamma des Angles d'Euler de BubbleRob par rapport au référentiel V-REP
+     //renvoie 999 si erreur 
+     //attention aux ports: ici 8080		
                         try {
                                  URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getOrientation");
                                     HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
@@ -186,13 +191,17 @@ public class Cubot2 {
                         
                         catch (Exception ex) {
                                             ex.printStackTrace();
-                                            double answer = 110;
+                                            double answer = 999;
                                             return answer;
                         }  
         }
   
   
 protected static String ProximitySensor() {
+    
+    //renvoie TRUE si détecte quelquechose 
+    //False sinon
+    //"il y a une erreur" en cas d'erreur
         			
                         try {
                                  URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/ProximitySensor");
@@ -220,6 +229,11 @@ protected static String ProximitySensor() {
         }
 
 protected static int setVitesseMoteur(String moteur, float vitesse){
+    
+    //paramètres: moteur doit être "droit" ou "gauche" .vitesse un float 
+    //return 1 
+    //0 si erreur de connexion
+    //attention aux ports: ici 8080
      try {
             URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/setMotor?moteur=" + moteur +"&valeur=" + vitesse);
             HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
@@ -235,7 +249,10 @@ protected static int setVitesseMoteur(String moteur, float vitesse){
         return 0;}  
 }
 protected static double[] getPositionBubbleRob(){
-     try {
+    //Renvoie liste de double avec la coordonée x et y de BubbleRob [x, y]
+    // [110,110] si erreur
+    //Attention aux ports: ici 8080
+     try { 
             URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getPositionBubbleRob");
             HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
             connexion.setRequestProperty("User-Agent", "");
@@ -263,6 +280,10 @@ protected static double[] getPositionBubbleRob(){
 }
 
 protected static double[] getPositionDestination(){
+    //renvoie la position de la destination de la trajectoire de BubbleRob sous forme de tableau de double [x,y]
+    //par rapport au référenciel V-REP
+    //renvoie [110,110 ]si erreur
+    //Attention au ports: ici 8080
      try {
             URL url = new URL("http://localhost:8080/REST_Terminator/webresources/Terminator/getPositionDestination");
             HttpURLConnection connexion = (HttpURLConnection) url.openConnection();
@@ -290,7 +311,8 @@ protected static double[] getPositionDestination(){
                         }  
 }
 protected static double getTrajectoire(double[] pointA, double[] pointB) {
-   
+    //Paramètres pointA,pointB deux doubles avec les coordonnées [x,y]
+   //Renvoie l'angle qu'il faut tourner pour se mettre dans l'axe  qui passe par les 2 points
   double angle = Math.atan(Math.abs(pointB[1] - pointA[1])/Math.abs(pointB[0] - pointA[0]));
   return angle;
 }
