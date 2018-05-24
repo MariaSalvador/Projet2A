@@ -39,11 +39,14 @@ public class Cubot {
         double TimeOut;
 
         connexionclient();
+        
         /*L'utilisateur a la possibilité de prendre comme destination le point qui s'appelle dans V-REP "POINT_B"
-            *sinon, il peut aussi donner les cordonnées lui même sous forme de double {x,y}
-            double[] posB = getPositionDestination(); //coordonnées x,y,z du point objectif
+            sinon, il peut aussi donner les cordonnées lui même sous forme de double {x,y}
+            double[] posB = {0, -2};
+        
          */
-        double[] posB = {0, -2};
+        double[] posB = getPositionDestination(); //coordonnées x,y,z du point objectif
+        
         while (getTime() < 500) { //simulation de temps 500
 
             /* ------------For Testing purpose only -------------
