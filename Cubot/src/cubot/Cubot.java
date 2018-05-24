@@ -39,22 +39,22 @@ public class Cubot {
         double TimeOut;
 
         connexionclient();
-        
+
         /*L'utilisateur a la possibilité de prendre comme destination le point qui s'appelle dans V-REP "POINT_B"
             sinon, il peut aussi donner les cordonnées lui même sous forme de double {x,y}
-            double[] posB = {0, -2};
+            double[] posB = getPositionDestination();
         
          */
-        double[] posB = getPositionDestination(); //coordonnées x,y,z du point objectif
-        
-        while (getTime() < 500) { //simulation de temps 500
+        double[] posB = {+1.2000e+0, -2.0000e-1}; //coordonnées x,y,z du point objectif
+
+        while (getTime() < 5000) { //simulation de temps 500
 
             /* ------------For Testing purpose only -------------
                 TimeEntry = System.currentTimeMillis();
                 TimeEntry = getTime();*/
             if (ProximitySensor() == "true") // si obstacle detecté     
             {
-                backUntilTime = getTime() + 4;    // On va rajoute 
+                backUntilTime = getTime() + 4;
             }
 
             if (backUntilTime > getTime()) // On tourne
@@ -69,11 +69,12 @@ public class Cubot {
                     setVitesseMoteur("gauche", 0);
                     setVitesseMoteur("droit", 0);  // On arrete les 2 moteurs pour calculer l'angle, sinon le calcul est faux
                     double orien = getOrientation();
-                    double orientationvoulue = Math.toDegrees(-getTrajectoire(getPositionBubbleRob(), getPositionDestination()));
+                    double orientationvoulue = Math.toDegrees(getTrajectoire(getPositionBubbleRob(), posB));
                     orien = Math.toDegrees(orien);   // transformation en degrées
                     if ((orien < orientationvoulue + 2) && (orien > orientationvoulue - 2)) // Si on est dans le bon axe, avec une erreur de 2 degrés
                     {
                         backToAxisTime = getTime() + 10;
+
                     }
 
                     //il tourne sur lui meme
@@ -116,6 +117,7 @@ public class Cubot {
                         System.out.println(TimeWhile(TimeEntry, TimeOut));
                         TimeOut = getTime();*/
         }
+        System.out.println("Simulation terminée");
 
     }
 
@@ -269,6 +271,7 @@ public class Cubot {
         } catch (Exception ex) {
             ex.printStackTrace();
             double[] answer = {110, 110};
+            System.out.println("ERREUUR");
             return answer;
         }
     }
@@ -307,7 +310,7 @@ public class Cubot {
     protected static double getTrajectoire(double[] pointA, double[] pointB) {
         //Paramètres pointA,pointB deux doubles avec les coordonnées [x,y]
         //Renvoie l'angle qu'il faut tourner pour se mettre dans l'axe  qui passe par les 2 points
-        double angle = Math.atan(Math.abs(pointB[1] - pointA[1]) / Math.abs(pointB[0] - pointA[0]));
+        double angle = Math.atan((pointB[1] - pointA[1]) / (pointB[0] - pointA[0]));
         return angle;
     }
 
